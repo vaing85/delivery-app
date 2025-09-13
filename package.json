@@ -1,0 +1,41 @@
+{
+  "name": "delivery-app",
+  "version": "1.0.0",
+  "description": "Multi-platform delivery management application",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "web-portal",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:web": "cd web-portal && npm run dev",
+    "build": "npm run build:backend && npm run build:web",
+    "build:backend": "cd backend && npm run build",
+    "build:web": "cd web-portal && npm run build",
+    "test": "npm run test:backend && npm run test:web",
+    "test:backend": "cd backend && npm test",
+    "test:web": "cd web-portal && npm test",
+    "install:all": "npm install && cd backend && npm install && cd ../web-portal && npm install",
+    "clean": "rimraf node_modules backend/node_modules web-portal/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "keywords": [
+    "delivery",
+    "logistics",
+    "react",
+    "typescript",
+    "nodejs",
+    "express",
+    "flutter",
+    "mobile",
+    "web"
+  ],
+  "author": "Delivery App Team",
+  "license": "MIT"
+}
