@@ -34,7 +34,7 @@ const GoogleMapsDebug: React.FC = () => {
       
       script.onload = () => {
         setApiKeyStatus('valid');
-        setTestResults(prev => ({ ...prev, scriptLoaded: true }));
+        setTestResults((prev: any) => ({ ...prev, scriptLoaded: true }));
       };
       
       script.onerror = () => {
@@ -52,9 +52,9 @@ const GoogleMapsDebug: React.FC = () => {
               center: { lat: 0, lng: 0 },
               zoom: 1
             });
-            setTestResults(prev => ({ ...prev, mapCreated: true }));
+            setTestResults((prev: any) => ({ ...prev, mapCreated: true }));
           } catch (mapError) {
-            setTestResults(prev => ({ ...prev, mapCreated: false, mapError: mapError.message }));
+            setTestResults((prev: any) => ({ ...prev, mapCreated: false, mapError: (mapError as Error).message }));
           }
         }
       }, 2000);

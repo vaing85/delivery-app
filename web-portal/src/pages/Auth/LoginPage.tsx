@@ -47,9 +47,17 @@ const LoginPage: React.FC = () => {
         
         // Update auth store
         login(user, tokens.accessToken, tokens.refreshToken);
-        navigate(from, { replace: true });
+        
+        // Redirect based on user role
+        if (user.role === 'BUSINESS') {
+          navigate('/business', { replace: true });
+        } else if (user.role === 'ADMIN') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate(from, { replace: true });
+        }
       } else {
-        setError(response.error?.message || 'Login failed. Please try again.');
+        setError(response.message || 'Login failed. Please try again.');
       }
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Login failed. Please try again.');
@@ -73,7 +81,7 @@ const LoginPage: React.FC = () => {
           </Typography>
           
           <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-            Sign in to your delivery app account
+            Sign in to your account - Customers, Drivers, Business Owners, and Administrators
           </Typography>
 
           {error && (
@@ -139,17 +147,6 @@ const LoginPage: React.FC = () => {
                   sx={{ textTransform: 'none' }}
                 >
                   Sign up
-                </Button>
-              </Typography>
-              
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Business account?{' '}
-                <Button
-                  variant="text"
-                  onClick={() => navigate('/business/login')}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Business Login
                 </Button>
               </Typography>
             </Box>

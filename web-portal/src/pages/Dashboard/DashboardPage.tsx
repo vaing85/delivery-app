@@ -37,6 +37,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { ordersAPI, deliveriesAPI, usersAPI, notificationsAPI } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { AdminDashboard, EnhancedAdminDashboard, CustomerDashboard, DriverDashboard, BusinessDashboard, AdminBusinessDashboard } from '../../components/Dashboard';
+import SkeletonLoader from '@/components/Loading/SkeletonLoader';
 
 interface DashboardStats {
   totalOrders: number;
@@ -91,15 +92,15 @@ const DashboardPage: React.FC = () => {
 
         return {
           totalOrders: orders.length,
-          pendingOrders: orders.filter(o => o.status === 'PENDING').length,
-          inProgressOrders: orders.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
-          completedOrders: orders.filter(o => o.status === 'DELIVERED').length,
+          pendingOrders: orders.filter((o: any) => o.status === 'PENDING').length,
+          inProgressOrders: orders.filter((o: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
+          completedOrders: orders.filter((o: any) => o.status === 'DELIVERED').length,
           totalDeliveries: deliveries.length,
-          activeDeliveries: deliveries.filter(d => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
+          activeDeliveries: deliveries.filter((d: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
           totalUsers: users.length,
-          totalDrivers: users.filter(u => u.role === 'DRIVER').length,
-          totalCustomers: users.filter(u => u.role === 'CUSTOMER').length,
-          totalBusiness: users.filter(u => u.role === 'BUSINESS').length,
+          totalDrivers: users.filter((u: any) => u.role === 'DRIVER').length,
+          totalCustomers: users.filter((u: any) => u.role === 'CUSTOMER').length,
+          totalBusiness: users.filter((u: any) => u.role === 'BUSINESS').length,
           unreadNotifications: notificationsRes.data.unreadCount
         };
              } else if (user?.role === 'DRIVER') {
@@ -110,16 +111,16 @@ const DashboardPage: React.FC = () => {
          ]);
 
         const deliveries = deliveriesRes.data;
-        const driverDeliveries = deliveries.filter(d => d.driverId === user.id);
-        const driverOrders = driverDeliveries.map(d => d.order);
+        const driverDeliveries = deliveries.filter((d: any) => d.driverId === user.id);
+        const driverOrders = driverDeliveries.map((d: any) => d.order);
 
         return {
           totalOrders: driverOrders.length,
-          pendingOrders: driverOrders.filter(o => o.status === 'PENDING').length,
-          inProgressOrders: driverOrders.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
-          completedOrders: driverOrders.filter(o => o.status === 'DELIVERED').length,
+          pendingOrders: driverOrders.filter((o: any) => o.status === 'PENDING').length,
+          inProgressOrders: driverOrders.filter((o: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
+          completedOrders: driverOrders.filter((o: any) => o.status === 'DELIVERED').length,
           totalDeliveries: driverDeliveries.length,
-          activeDeliveries: driverDeliveries.filter(d => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
+          activeDeliveries: driverDeliveries.filter((d: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
           totalUsers: 0, // Driver can't see user counts
           totalDrivers: 1, // Just themselves
           totalCustomers: 0, // Driver can't see customer counts
@@ -136,18 +137,18 @@ const DashboardPage: React.FC = () => {
 
         const deliveries = deliveriesRes.data;
         const users = usersRes.data;
-        const businessDrivers = users.filter(u => u.role === 'DRIVER');
+        const businessDrivers = users.filter((u: any) => u.role === 'DRIVER');
         
         // Get orders from deliveries (business sees orders through their drivers)
-        const businessOrders = deliveries.map(d => d.order);
+        const businessOrders = deliveries.map((d: any) => d.order);
 
         return {
           totalOrders: businessOrders.length,
-          pendingOrders: businessOrders.filter(o => o.status === 'PENDING').length,
-          inProgressOrders: businessOrders.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
-          completedOrders: businessOrders.filter(o => o.status === 'DELIVERED').length,
+          pendingOrders: businessOrders.filter((o: any) => o.status === 'PENDING').length,
+          inProgressOrders: businessOrders.filter((o: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
+          completedOrders: businessOrders.filter((o: any) => o.status === 'DELIVERED').length,
           totalDeliveries: deliveries.length,
-          activeDeliveries: deliveries.filter(d => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
+          activeDeliveries: deliveries.filter((d: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)).length,
           totalUsers: businessDrivers.length,
           totalDrivers: businessDrivers.length,
           totalCustomers: 0, // Business can't see customer counts
@@ -162,13 +163,13 @@ const DashboardPage: React.FC = () => {
          ]);
 
         const orders = ordersRes.data;
-        const customerOrders = orders.filter(o => o.customerId === user.id);
+        const customerOrders = orders.filter((o: any) => o.customerId === user?.id);
 
         return {
           totalOrders: customerOrders.length,
-          pendingOrders: customerOrders.filter(o => o.status === 'PENDING').length,
-          inProgressOrders: customerOrders.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
-          completedOrders: customerOrders.filter(o => o.status === 'DELIVERED').length,
+          pendingOrders: customerOrders.filter((o: any) => o.status === 'PENDING').length,
+          inProgressOrders: customerOrders.filter((o: any) => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length,
+          completedOrders: customerOrders.filter((o: any) => o.status === 'DELIVERED').length,
           totalDeliveries: 0, // Customer can't see delivery counts
           activeDeliveries: 0,
           totalUsers: 0, // Customer can't see user counts
@@ -189,18 +190,18 @@ const DashboardPage: React.FC = () => {
              if (user?.role === 'DRIVER') {
          // Driver sees orders from their deliveries
          const deliveriesRes = await deliveriesAPI.getDeliveries({ limit: 100 }); // Use smaller limit
-         const driverDeliveries = deliveriesRes.data.filter(d => d.driverId === user.id);
-         const driverOrders = driverDeliveries.map(d => d.order).slice(0, 5);
+          const driverDeliveries = deliveriesRes.data.filter((d: any) => d.driverId === user.id);
+          const driverOrders = driverDeliveries.map((d: any) => d.order).slice(0, 5);
          return driverOrders;
        } else if (user?.role === 'BUSINESS') {
          // Business sees orders from their drivers' deliveries
          const deliveriesRes = await deliveriesAPI.getDeliveries({ limit: 100 }); // Use smaller limit
-         const businessOrders = deliveriesRes.data.map(d => d.order).slice(0, 5);
+         const businessOrders = deliveriesRes.data.map((d: any) => d.order).slice(0, 5);
          return businessOrders;
        } else if (user?.role === 'CUSTOMER') {
          // Customer sees their own orders
          const response = await ordersAPI.getOrders({ limit: 100 }); // Use smaller limit
-         const customerOrders = response.data.filter(o => o.customerId === user.id);
+         const customerOrders = response.data.filter((o: any) => o.customerId === user.id);
          return customerOrders;
        } else {
          // Admin sees all orders
@@ -219,7 +220,7 @@ const DashboardPage: React.FC = () => {
              if (user?.role === 'DRIVER') {
          // Driver sees their own deliveries
          const response = await deliveriesAPI.getDeliveries({ limit: 100 }); // Use smaller limit
-         const driverDeliveries = response.data.filter(d => d.driverId === user.id).slice(0, 5);
+          const driverDeliveries = response.data.filter((d: any) => d.driverId === user.id).slice(0, 5);
          return driverDeliveries;
        } else if (user?.role === 'BUSINESS') {
          // Business sees all deliveries from their drivers
@@ -258,12 +259,12 @@ const DashboardPage: React.FC = () => {
              if (user?.role === 'DRIVER') {
          // Driver sees trends from their deliveries
          const deliveriesRes = await deliveriesAPI.getDeliveries({ limit: 100 }); // Use smaller limit
-         const driverDeliveries = deliveriesRes.data.filter(d => d.driverId === user.id);
-         orders = driverDeliveries.map(d => d.order);
+          const driverDeliveries = deliveriesRes.data.filter((d: any) => d.driverId === user.id);
+          orders = driverDeliveries.map((d: any) => d.order);
        } else if (user?.role === 'CUSTOMER') {
          // Customer sees trends from their orders
          const response = await ordersAPI.getOrders({ limit: 100 }); // Use smaller limit
-         orders = response.data.filter(o => o.customerId === user.id);
+         orders = response.data.filter((o: any) => o.customerId === user.id);
        } else {
          // Admin sees all orders
          const response = await ordersAPI.getOrders({ limit: 1000 });
@@ -313,6 +314,15 @@ const DashboardPage: React.FC = () => {
         <Alert severity="error">
           Failed to load dashboard data. Please try again.
         </Alert>
+      </Box>
+    );
+  }
+
+  // Show skeleton loading for initial load
+  if (statsLoading && !stats) {
+    return (
+      <Box p={3}>
+        <SkeletonLoader variant="dashboard" />
       </Box>
     );
   }
@@ -594,7 +604,7 @@ const DashboardPage: React.FC = () => {
                  </Button>
                </Box>
                <List>
-                 {recentOrders?.map((order, index) => (
+                  {recentOrders?.map((order: any, index: number) => (
                    <React.Fragment key={order.id}>
                      <ListItem>
                        <ListItemIcon>
@@ -643,7 +653,7 @@ const DashboardPage: React.FC = () => {
                 </Button>
               </Box>
               <List>
-                {recentDeliveries?.map((delivery, index) => (
+                 {recentDeliveries?.map((delivery: any, index: number) => (
                   <React.Fragment key={delivery.id}>
                     <ListItem>
                       <ListItemIcon>
@@ -694,7 +704,7 @@ const DashboardPage: React.FC = () => {
              </Button>
            </Box>
            <List>
-             {recentNotifications?.slice(0, 5).map((notification, index) => (
+              {recentNotifications?.slice(0, 5).map((notification: any, index: number) => (
                <React.Fragment key={notification.id}>
                  <ListItem>
                    <ListItemIcon>

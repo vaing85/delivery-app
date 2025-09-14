@@ -23,6 +23,7 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  token: string | null; // Alias for accessToken for backward compatibility
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -50,6 +51,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       accessToken: null,
       refreshToken: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -67,6 +69,7 @@ export const useAuthStore = create<AuthStore>()(
         set({ 
           accessToken, 
           refreshToken,
+          token: accessToken, // Set token alias
           isAuthenticated: true 
         });
       },
@@ -86,6 +89,7 @@ export const useAuthStore = create<AuthStore>()(
           user,
           accessToken,
           refreshToken,
+          token: accessToken, // Set token alias
           isAuthenticated: true,
           error: null,
           isLoading: false
@@ -103,6 +107,7 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           accessToken: null,
           refreshToken: null,
+          token: null,
           isAuthenticated: false,
           error: null,
           isLoading: false
@@ -139,7 +144,7 @@ export const useAuthStore = create<AuthStore>()(
               if (authStorage) {
                 const parsedAuthStorage = JSON.parse(authStorage);
                 const user = parsedAuthStorage.state.user;
-                set({ user, accessToken, refreshToken, isAuthenticated: true, loading: false });
+                set({ user, accessToken, refreshToken, token: accessToken, isAuthenticated: true, isLoading: false });
               } else {
                 // If auth-storage is missing but tokens exist, something is wrong. Force logout.
                 console.log('Auth storage missing but tokens present, forcing logout.');
@@ -151,7 +156,7 @@ export const useAuthStore = create<AuthStore>()(
             }
           } else {
             // If tokens are missing or invalid, ensure isAuthenticated is false
-            set({ isAuthenticated: false, loading: false });
+            set({ isAuthenticated: false, isLoading: false });
           }
         }
       },

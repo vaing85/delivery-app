@@ -1,0 +1,421 @@
+// PostgreSQL schema for production deployment
+// This is a copy of the main schema with PostgreSQL-specific configurations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums for PostgreSQL (better than string constraints)
+enum UserRole {
+  ADMIN
+  BUSINESS
+  DRIVER
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PICKUP_ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DeliveryStatus {
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+enum NotificationType {
+  ORDER_UPDATE
+  DELIVERY_STATUS
+  PAYMENT
+  SYSTEM
+  DRIVER_ALERT
+  CUSTOMER_ALERT
+  ADMIN_ALERT
+}
+
+enum PhotoType {
+  PICKUP
+  DELIVERY
+  DAMAGE
+  ISSUE
+}
+
+enum SignatureType {
+  CUSTOMER
+  DRIVER
+  WITNESS
+}
+
+enum RouteStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole  @default(CUSTOMER)
+  isActive      Boolean   @default(true)
+  isVerified    Boolean   @default(false)
+  avatar        String?
+  dateOfBirth   DateTime?
+  address       Address?
+  rapydCustomerId String? @unique
+  
+  // Driver specific fields
+  driverProfile DriverProfile?
+  
+  // Customer specific fields
+  customerProfile CustomerProfile?
+  
+  // Relationships
+  orders        Order[]        @relation("CustomerOrders")
+  driverOrders  Order[]        @relation("DriverDeliveries")
+  deliveries    Delivery[]     @relation("DriverDeliveries")
+  routes        Route[]
+  signatures    Signature[]
+  photos        Photo[]
+  notifications Notification[]
+  scheduledNotifications ScheduledNotification[]
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@map("users")
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  street      String
+  city        String
+  state       String
+  postalCode  String
+  country     String
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean  @default(false)
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("addresses")
+  @@index([userId])
+}
+
+model DriverProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  licenseNumber   String   @unique
+  vehicleType     String
+  vehicleModel    String?
+  vehicleColor    String?
+  licensePlate    String?
+  insuranceInfo   String?
+  backgroundCheck Boolean  @default(false)
+  isAvailable     Boolean  @default(true)
+  currentLocationLat Float?
+  currentLocationLng Float?
+  lastActive      DateTime?
+  rating          Float    @default(0.0)
+  totalDeliveries Int      @default(0)
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("driver_profiles")
+  @@index([userId])
+  @@index([isAvailable])
+  @@index([licenseNumber])
+}
+
+model CustomerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  preferences     String?
+  totalOrders     Int      @default(0)
+  totalSpent      Float    @default(0.0)
+  loyaltyPoints   Int      @default(0)
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("customer_profiles")
+  @@index([userId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  customerId      String
+  driverId        String?
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  rapydCheckoutId String?
+  rapydPaymentId  String?
+  rapydRefundId   String?
+  
+  // Order details
+  items           OrderItem[]
+  pickupAddress   String
+  deliveryAddress String
+  pickupLat       Float?
+  pickupLng       Float?
+  deliveryLat     Float?
+  deliveryLng     Float?
+  
+  // Timing
+  scheduledPickup DateTime?
+  scheduledDelivery DateTime?
+  actualPickup    DateTime?
+  actualDelivery  DateTime?
+  
+  // Financial
+  subtotal        Float
+  tax             Float
+  deliveryFee     Float
+  total           Float
+  tip             Float?        @default(0.0)
+  
+  // Special instructions
+  instructions    String?
+  isFragile       Boolean       @default(false)
+  requiresSignature Boolean      @default(true)
+  requiresPhoto   Boolean       @default(true)
+  
+  // Relationships
+  customer        User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  driver          User?         @relation("DriverDeliveries", fields: [driverId], references: [id])
+  deliveries      Delivery[]
+  signatures      Signature[]
+  photos          Photo[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@map("orders")
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  name        String
+  description String?
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  weight      Float?
+  dimensions  String?
+  
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("order_items")
+  @@index([orderId])
+}
+
+model Delivery {
+  id          String        @id @default(cuid())
+  orderId     String
+  driverId    String
+  status      DeliveryStatus
+  startTime   DateTime?
+  endTime     DateTime?
+  estimatedDuration Int? // in minutes
+  actualDuration    Int? // in minutes
+  
+  // Route information
+  route       String?
+  distance    Float? // in kilometers
+  
+  // Relationships
+  order       Order    @relation(fields: [orderId], references: [id])
+  driver      User     @relation("DriverDeliveries", fields: [driverId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("deliveries")
+  @@index([orderId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model Signature {
+  id          String        @id @default(cuid())
+  orderId     String
+  userId      String
+  signatureData String // Base64 encoded signature image
+  signatureType SignatureType @default(CUSTOMER)
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  
+  // Relationships
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("signatures")
+  @@index([orderId])
+  @@index([userId])
+}
+
+model Photo {
+  id          String    @id @default(cuid())
+  orderId     String
+  userId      String
+  photoUrl    String
+  photoType   PhotoType
+  description String?
+  metadata    String? // EXIF data, location, etc.
+  
+  // Relationships
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("photos")
+  @@index([orderId])
+  @@index([userId])
+  @@index([photoType])
+}
+
+model Notification {
+  id          String          @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType
+  isRead      Boolean         @default(false)
+  data        String? // Additional data for the notification
+  priority    PriorityLevel   @default(MEDIUM)
+  
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  oldValues   String?
+  newValues   String?
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model ScheduledNotification {
+  id          String          @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType
+  data        String?
+  priority    PriorityLevel   @default(MEDIUM)
+  scheduledFor DateTime
+  isSent      Boolean         @default(false)
+  
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@map("scheduled_notifications")
+  @@index([userId])
+  @@index([scheduledFor])
+  @@index([isSent])
+}
+
+model Route {
+  id              String      @id @default(cuid())
+  driverId        String
+  locations       String      // JSON string of locations
+  totalDistance   Float       // in kilometers
+  totalDuration   Int         // in minutes
+  estimatedEarnings Float
+  optimized       Boolean     @default(false)
+  algorithm       String      // Algorithm used for optimization
+  status          RouteStatus @default(PLANNED)
+  
+  driver          User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@map("routes")
+  @@index([driverId])
+  @@index([status])
+  @@index([createdAt])
+}

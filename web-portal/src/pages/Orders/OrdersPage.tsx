@@ -78,7 +78,7 @@ interface Order {
 interface OrdersResponse {
   success: boolean;
   data: Order[];
-  pagination: {
+  pagination?: {
     page: number;
     limit: number;
     total: number;
@@ -135,7 +135,7 @@ const OrdersPage: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
 
   // Fetch orders
-  const { data: ordersData, isLoading, error, refetch } = useQuery<OrdersResponse>({
+  const { data: ordersData, isPending, error, refetch } = useQuery<OrdersResponse>({
     queryKey: ['orders', page, limit, filters],
     queryFn: async () => {
       // Filter out empty string values to prevent API validation errors
@@ -144,7 +144,7 @@ const OrdersPage: React.FC = () => {
       );
       
       // For customers, automatically filter by their customer ID
-      const queryParams = {
+      const queryParams: any = {
         page,
         limit,
         ...cleanFilters
@@ -156,9 +156,9 @@ const OrdersPage: React.FC = () => {
       }
       
       const response = await ordersAPI.getOrders(queryParams);
-      return response;
+      return response.data as OrdersResponse;
     },
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     enabled: isAuthenticated
   });
 
@@ -169,7 +169,7 @@ const OrdersPage: React.FC = () => {
     },
     onSuccess: () => {
       toast.success('Order deleted successfully');
-      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete order');
@@ -219,10 +219,10 @@ const OrdersPage: React.FC = () => {
 
   // Handle select all
   const handleSelectAll = () => {
-    if (selectedOrders.length === ordersData?.data.length) {
+    if (selectedOrders.length === ordersData?.data?.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(ordersData?.data.map(order => order.id) || []);
+      setSelectedOrders(ordersData?.data?.map(order => order.id) || []);
     }
   };
 
@@ -278,7 +278,7 @@ const OrdersPage: React.FC = () => {
                 variant="outlined"
                 startIcon={<RefreshIcon />}
                 onClick={() => refetch()}
-                disabled={isLoading}
+                disabled={isPending}
               >
                 Refresh
               </Button>
@@ -304,7 +304,7 @@ const OrdersPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="primary">
-                  {ordersData?.data.filter(o => o.status === 'PENDING').length || 0}
+                  {ordersData?.data?.filter(o => o.status === 'PENDING').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Pending Orders
@@ -314,7 +314,7 @@ const OrdersPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="info.main">
-                  {ordersData?.data.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length || 0}
+                  {ordersData?.data?.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   In Progress
@@ -324,7 +324,7 @@ const OrdersPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="success.main">
-                  {ordersData?.data.filter(o => o.status === 'DELIVERED').length || 0}
+                  {ordersData?.data?.filter(o => o.status === 'DELIVERED').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Delivered
@@ -334,7 +334,7 @@ const OrdersPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="warning.main">
-                  {ordersData?.data.filter(o => o.status === 'CANCELLED').length || 0}
+                  {ordersData?.data?.filter(o => o.status === 'CANCELLED').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Cancelled
@@ -418,7 +418,7 @@ const OrdersPage: React.FC = () => {
               variant="contained"
               color="error"
               onClick={handleBulkDelete}
-              disabled={deleteOrderMutation.isLoading}
+              disabled={deleteOrderMutation.isPending}
             >
               Delete Selected
             </Button>
@@ -435,7 +435,7 @@ const OrdersPage: React.FC = () => {
                 <TableCell padding="checkbox">
                   <input
                     type="checkbox"
-                    checked={selectedOrders.length === ordersData?.data.length && ordersData.data.length > 0}
+                    checked={selectedOrders.length === ordersData?.data?.length && (ordersData?.data?.length || 0) > 0}
                     onChange={handleSelectAll}
                   />
                 </TableCell>
@@ -451,13 +451,13 @@ const OrdersPage: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading ? (
+              {isPending ? (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : ordersData?.data.length === 0 ? (
+              ) : ordersData?.data?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
                     <Typography variant="body2" color="text.secondary">
@@ -466,7 +466,7 @@ const OrdersPage: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                ordersData?.data.map((order) => (
+                ordersData?.data?.map((order) => (
                   <TableRow key={order.id} hover>
                     <TableCell padding="checkbox">
                       <input
@@ -549,7 +549,7 @@ const OrdersPage: React.FC = () => {
                             size="small" 
                             color="error"
                             onClick={() => handleDeleteOrder(order.id)}
-                            disabled={deleteOrderMutation.isLoading}
+                            disabled={deleteOrderMutation.isPending}
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -565,10 +565,10 @@ const OrdersPage: React.FC = () => {
       </Paper>
 
       {/* Pagination */}
-      {ordersData?.pagination.pages > 1 && (
+      {ordersData?.pagination && ordersData.pagination.pages > 1 && (
         <Box display="flex" justifyContent="center" mt={3}>
           <Pagination
-            count={ordersData.pagination.pages}
+            count={ordersData.pagination?.pages || 1}
             page={page}
             onChange={handlePageChange}
             color="primary"
@@ -587,7 +587,7 @@ const OrdersPage: React.FC = () => {
                 Total Orders
               </Typography>
               <Typography variant="h4">
-                {ordersData?.pagination.total || 0}
+                {ordersData?.pagination?.total || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -599,7 +599,7 @@ const OrdersPage: React.FC = () => {
                 Pending
               </Typography>
               <Typography variant="h4" color="warning.main">
-                {ordersData?.data.filter(o => o.status === 'PENDING').length || 0}
+                {ordersData?.data?.filter(o => o.status === 'PENDING').length || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -611,7 +611,7 @@ const OrdersPage: React.FC = () => {
                 In Progress
               </Typography>
               <Typography variant="h4" color="info.main">
-                {ordersData?.data.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length || 0}
+                {ordersData?.data?.filter(o => ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(o.status)).length || 0}
               </Typography>
             </CardContent>
           </Card>
@@ -623,7 +623,7 @@ const OrdersPage: React.FC = () => {
                 Completed
               </Typography>
               <Typography variant="h4" color="success.main">
-                {ordersData?.data.filter(o => o.status === 'DELIVERED').length || 0}
+                {ordersData?.data?.filter(o => o.status === 'DELIVERED').length || 0}
               </Typography>
             </CardContent>
           </Card>

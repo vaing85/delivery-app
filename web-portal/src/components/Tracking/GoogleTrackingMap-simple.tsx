@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
 import { useGoogleMaps } from '@/utils/useGoogleMaps';
+import MapFallback from './MapFallback';
 
 interface GoogleTrackingMapProps {
   orderId: string;
@@ -140,34 +141,22 @@ const GoogleTrackingMapSimple: React.FC<GoogleTrackingMapProps> = ({ orderId }) 
   // Add error boundary for Google Maps errors
   if (mapError) {
     return (
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" color="error" gutterBottom>
-          Map Error
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {mapError}
-        </Typography>
-        <Button 
-          variant="outlined" 
-          size="small" 
-          onClick={() => {
-            setMapError(null);
-            setIsMapLoading(true);
-            mapInitAttemptedRef.current = false; // Reset initialization flag
-            // Force a complete re-initialization
-            mapInstanceRef.current = null;
-            retryMaps();
-            setTimeout(() => {
-              if (mapRef.current && isMountedRef.current) {
-                initMap();
-              }
-            }, 500);
-          }}
-          sx={{ mt: 1 }}
-        >
-          Retry
-        </Button>
-      </Paper>
+      <MapFallback 
+        error={mapError} 
+        onRetry={() => {
+          setMapError(null);
+          setIsMapLoading(true);
+          mapInitAttemptedRef.current = false;
+          mapInstanceRef.current = null;
+          retryMaps();
+          setTimeout(() => {
+            if (mapRef.current && isMountedRef.current) {
+              initMap();
+            }
+          }, 500);
+        }}
+        orderId={orderId}
+      />
     );
   }
 
@@ -181,6 +170,17 @@ const GoogleTrackingMapSimple: React.FC<GoogleTrackingMapProps> = ({ orderId }) 
           </Typography>
         </Box>
       </Paper>
+    );
+  }
+
+  // Handle maps error during loading
+  if (mapsError) {
+    return (
+      <MapFallback 
+        error={mapsError} 
+        onRetry={retryMaps}
+        orderId={orderId}
+      />
     );
   }
 

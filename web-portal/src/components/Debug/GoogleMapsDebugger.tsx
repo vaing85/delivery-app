@@ -67,7 +67,7 @@ const GoogleMapsDebugger: React.FC = () => {
       }}
     >
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" startIcon={<BugReportIcon />}>
+        <Typography variant="h6">
           Google Maps Debug
         </Typography>
         <Button size="small" onClick={() => setIsVisible(false)}>

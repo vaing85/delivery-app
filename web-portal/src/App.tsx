@@ -1,34 +1,36 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline, Box } from '@mui/material';
+import { CssBaseline, Box, CircularProgress } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '@/styles/accessibility.css';
 
 // Layout Components
 import Layout from '@/components/Layout/Layout';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 
-// Pages
+// Critical pages - load immediately
 import LoginPage from '@/pages/Auth/LoginPage';
-import BusinessLoginPage from '@/pages/Auth/BusinessLoginPage';
 import RegisterPage from '@/pages/Auth/RegisterPage';
-import DashboardPage from '@/pages/Dashboard/DashboardPage';
-import BusinessDashboardPage from '@/pages/Business/BusinessDashboardPage';
-import OrdersPage from '@/pages/Orders/OrdersPage';
-import OrderDetailsPage from '@/pages/Orders/OrderDetailsPage';
-import CreateOrderPage from '@/pages/Orders/CreateOrderPage';
-import DeliveriesPage from '@/pages/Deliveries/DeliveriesPage';
-import DeliveryDetailsPage from '@/pages/Deliveries/DeliveryDetailsPage';
-import UsersPage from '@/pages/Users/UsersPage';
-import UserProfilePage from '@/pages/Users/UserProfilePage';
-import DriversPage from '@/pages/Drivers/DriversPage';
-import DriverDetailsPage from '@/pages/Drivers/DriverDetailsPage';
-import PaymentPage from '@/pages/Payments/PaymentPage';
-import AnalyticsPage from '@/pages/Analytics/AnalyticsPage';
-import RouteOptimizationPage from '@/pages/RouteOptimization/RouteOptimizationPage';
-import ProfilePage from '@/pages/Profile/ProfilePage';
+
+// Lazy load heavy components
+const DashboardPage = lazy(() => import('@/pages/Dashboard/DashboardPage'));
+const BusinessDashboardPage = lazy(() => import('@/pages/Business/BusinessDashboardPage'));
+const OrdersPage = lazy(() => import('@/pages/Orders/OrdersPage'));
+const OrderDetailsPage = lazy(() => import('@/pages/Orders/OrderDetailsPage'));
+const CreateOrderPage = lazy(() => import('@/pages/Orders/CreateOrderPage'));
+const DeliveriesPage = lazy(() => import('@/pages/Deliveries/DeliveriesPage'));
+const DeliveryDetailsPage = lazy(() => import('@/pages/Deliveries/DeliveryDetailsPage'));
+const UsersPage = lazy(() => import('@/pages/Users/UsersPage'));
+const UserProfilePage = lazy(() => import('@/pages/Users/UserProfilePage'));
+const DriversPage = lazy(() => import('@/pages/Drivers/DriversPage'));
+const DriverDetailsPage = lazy(() => import('@/pages/Drivers/DriverDetailsPage'));
+const PaymentPage = lazy(() => import('@/pages/Payments/PaymentPage'));
+const AnalyticsPage = lazy(() => import('@/pages/Analytics/AnalyticsPage'));
+const RouteOptimizationPage = lazy(() => import('@/pages/RouteOptimization/RouteOptimizationPage'));
+const ProfilePage = lazy(() => import('@/pages/Profile/ProfilePage'));
 import NotificationsPage from '@/pages/Notifications/NotificationsPage';
 import SettingsPage from '@/pages/Settings/SettingsPage';
 import NotFoundPage from '@/pages/NotFound/NotFoundPage';
@@ -39,17 +41,33 @@ import { useAuthStore } from '@/store/authStore';
 // Theme
 import { lightTheme, darkTheme } from '@/styles/theme';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
+import ErrorBoundary from '@/components/ErrorHandling/ErrorBoundary';
+import { ErrorProvider } from '@/components/ErrorHandling/GlobalErrorHandler';
+import OfflineIndicator from '@/components/Offline/OfflineIndicator';
+import { SecurityProvider } from '@/contexts/SecurityContext';
 
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// Create enhanced query client with caching
+import { createEnhancedQueryClient } from '@/utils/cacheManager';
+
+const queryClient = createEnhancedQueryClient();
+
+// Loading component for Suspense
+const PageLoader = () => (
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    minHeight="100vh"
+    flexDirection="column"
+  >
+    <CircularProgress size={60} />
+    <Box mt={2} textAlign="center">
+    <Box component="span" sx={{ variant: 'body2', color: 'text.secondary' }}>
+      Loading page...
+    </Box>
+    </Box>
+  </Box>
+);
 
 function App() {
   const { isAuthenticated, user, initializeAuth, validateTokens } = useAuthStore();
@@ -72,30 +90,27 @@ function App() {
     [mode]
   );
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <CustomThemeProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Router
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
+       return (
+         <ErrorBoundary>
+           <ErrorProvider>
+             <SecurityProvider>
+               <QueryClientProvider client={queryClient}>
+                 <CustomThemeProvider>
+                   <ThemeProvider theme={theme}>
+                     <CssBaseline />
+                     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <Router
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
               <Routes>
                 {/* Public Routes */}
                 <Route 
                   path="/login" 
                   element={
                     isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
-                  } 
-                />
-                <Route 
-                  path="/business/login" 
-                  element={
-                    isAuthenticated ? <Navigate to="/business" replace /> : <BusinessLoginPage />
                   } 
                 />
                 <Route 
@@ -106,7 +121,13 @@ function App() {
                 />
 
                 {/* Protected Routes */}
-                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <Layout />
+                    </Suspense>
+                  </ProtectedRoute>
+                }>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="orders" element={<OrdersPage />} />
@@ -161,24 +182,30 @@ function App() {
               </Routes>
             </Router>
 
-            {/* Global Toast Notifications */}
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme={mode}
-            />
-          </Box>
-        </ThemeProvider>
-      </CustomThemeProvider>
-    </QueryClientProvider>
-  );
+                     {/* Global Toast Notifications */}
+                     <ToastContainer
+                       position="top-right"
+                       autoClose={5000}
+                       hideProgressBar={false}
+                       newestOnTop={false}
+                       closeOnClick
+                       rtl={false}
+                       pauseOnFocusLoss
+                       draggable
+                       pauseOnHover
+                       theme={mode}
+                     />
+                     
+                     {/* Offline Indicator */}
+                     <OfflineIndicator />
+                   </Box>
+                 </ThemeProvider>
+               </CustomThemeProvider>
+             </QueryClientProvider>
+           </SecurityProvider>
+         </ErrorProvider>
+       </ErrorBoundary>
+       );
 }
 
 export default App;

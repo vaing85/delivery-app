@@ -80,7 +80,7 @@ const NotificationsPage: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
 
   // Fetch notifications
-  const { data: notificationsData, isLoading, error } = useQuery({
+  const { data: notificationsData, isPending, error } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const response = await notificationsAPI.getNotifications({ limit: 50 });
@@ -95,7 +95,7 @@ const NotificationsPage: React.FC = () => {
       await notificationsAPI.updateNotification(notificationId, { isRead: true });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('Notification marked as read');
     },
     onError: () => {
@@ -109,7 +109,7 @@ const NotificationsPage: React.FC = () => {
       await notificationsAPI.markAllAsRead();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('All notifications marked as read');
     },
     onError: () => {
@@ -141,7 +141,7 @@ const NotificationsPage: React.FC = () => {
     if (selectedNotifications.length === notificationsData?.data.length) {
       setSelectedNotifications([]);
     } else {
-      setSelectedNotifications(notificationsData?.data.map(n => n.id) || []);
+      setSelectedNotifications(notificationsData?.data.map((n: any) => n.id) || []);
     }
   };
 
@@ -166,7 +166,7 @@ const NotificationsPage: React.FC = () => {
     );
   }
 
-  const unreadCount = notificationsData?.data.filter(n => !n.isRead).length || 0;
+  const unreadCount = notificationsData?.data.filter((n: any) => !n.isRead).length || 0;
 
   return (
     <Box p={3}>
@@ -185,7 +185,7 @@ const NotificationsPage: React.FC = () => {
           <Button
             variant="outlined"
             onClick={handleMarkAllAsRead}
-            disabled={markAllAsReadMutation.isLoading || unreadCount === 0}
+            disabled={markAllAsReadMutation.isPending || unreadCount === 0}
             startIcon={<MarkReadIcon />}
           >
             Mark All as Read
@@ -203,7 +203,7 @@ const NotificationsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="error.main">
-                  {notificationsData?.data.filter(n => !n.isRead).length || 0}
+                  {notificationsData?.data.filter((n: any) => !n.isRead).length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Unread
@@ -213,7 +213,7 @@ const NotificationsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="primary.main">
-                  {notificationsData?.data.filter(n => n.type === 'DELIVERY_UPDATE').length || 0}
+                  {notificationsData?.data.filter((n: any) => n.type === 'DELIVERY_UPDATE').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Delivery Updates
@@ -223,7 +223,7 @@ const NotificationsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="info.main">
-                  {notificationsData?.data.filter(n => n.type === 'ORDER_STATUS').length || 0}
+                  {notificationsData?.data.filter((n: any) => n.type === 'ORDER_STATUS').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Order Updates
@@ -233,7 +233,7 @@ const NotificationsPage: React.FC = () => {
             <Grid item xs={12} sm={6} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="success.main">
-                  {notificationsData?.data.filter(n => n.type === 'PROMOTION').length || 0}
+                  {notificationsData?.data.filter((n: any) => n.type === 'PROMOTION').length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Promotions
@@ -248,7 +248,7 @@ const NotificationsPage: React.FC = () => {
 
       {/* Notifications List */}
       <Paper>
-        {isLoading ? (
+        {isPending ? (
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />
           </Box>
@@ -260,7 +260,7 @@ const NotificationsPage: React.FC = () => {
           </Box>
         ) : (
           <List>
-            {notificationsData.data.map((notification, index) => (
+            {notificationsData.data.map((notification: any, index: number) => (
               <React.Fragment key={notification.id}>
                 <ListItem
                   sx={{
@@ -304,7 +304,7 @@ const NotificationsPage: React.FC = () => {
                       <IconButton
                         size="small"
                         onClick={() => handleMarkAsRead(notification.id)}
-                        disabled={markAsReadMutation.isLoading}
+                        disabled={markAsReadMutation.isPending}
                         title="Mark as read"
                       >
                         <MarkReadIcon />

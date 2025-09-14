@@ -69,6 +69,8 @@ import {
   Traffic as TrafficIcon,
   Schedule as ScheduleIcon,
   GpsFixed as GpsFixedIcon,
+  ShoppingCart as OrdersIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { usersAPI } from '../../services/api';
@@ -579,12 +581,180 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ stats, onRefresh 
 
   return (
     <>
-      {/* Business Overview - Single Card */}
-      <Paper sx={{ p: 4, mt: 4 }}>
+      {/* Header Section */}
+      <Paper sx={{ p: 4, mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Box display="flex" alignItems="center">
+            <BusinessIcon sx={{ mr: 2, fontSize: 40 }} />
+            <Box>
+              <Typography variant="h4" component="h1" fontWeight="bold">
+                Business Dashboard
+              </Typography>
+              <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                Manage your delivery operations
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<RefreshIcon />}
+            onClick={onRefresh}
+            sx={{ 
+              bgcolor: 'rgba(255,255,255,0.2)', 
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+            }}
+          >
+            Refresh Data
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Quick Stats Overview */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            p: 3, 
+            textAlign: 'center', 
+            background: 'linear-gradient(45deg, #4CAF50 30%, #66BB6A 90%)',
+            color: 'white',
+            height: '100%'
+          }}>
+            <PeopleIcon sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h3" fontWeight="bold">
+              {safeStats.totalDrivers}
+            </Typography>
+            <Typography variant="h6">Total Drivers</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              {drivers.filter(d => d.isAvailable).length} available now
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            p: 3, 
+            textAlign: 'center', 
+            background: 'linear-gradient(45deg, #2196F3 30%, #42A5F5 90%)',
+            color: 'white',
+            height: '100%'
+          }}>
+            <DeliveryIcon sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h3" fontWeight="bold">
+              {safeStats.totalDeliveries}
+            </Typography>
+            <Typography variant="h6">Total Deliveries</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              All time deliveries
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            p: 3, 
+            textAlign: 'center', 
+            background: 'linear-gradient(45deg, #FF9800 30%, #FFB74D 90%)',
+            color: 'white',
+            height: '100%'
+          }}>
+            <MoneyIcon sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h3" fontWeight="bold">
+              ${safeStats.totalRevenue.toLocaleString()}
+            </Typography>
+            <Typography variant="h6">Total Revenue</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Lifetime earnings
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            p: 3, 
+            textAlign: 'center', 
+            background: 'linear-gradient(45deg, #9C27B0 30%, #BA68C8 90%)',
+            color: 'white',
+            height: '100%'
+          }}>
+            <StarIcon sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="h3" fontWeight="bold">
+              {safeStats.averageRating.toFixed(1)}
+            </Typography>
+            <Typography variant="h6">Avg Rating</Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Customer satisfaction
+            </Typography>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Quick Actions Section */}
+      <Paper sx={{ p: 4, mb: 4 }}>
         <Box display="flex" alignItems="center" mb={3}>
-          <BusinessIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
+          <SettingsIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
           <Typography variant="h5" component="h2" fontWeight="bold">
-            Business Overview
+            Quick Actions
+          </Typography>
+        </Box>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<OrdersIcon />}
+              onClick={() => navigate('/orders/create')}
+              fullWidth
+              sx={{ 
+                py: 2,
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
+                }
+              }}
+            >
+              Create New Order
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="outlined"
+              startIcon={<PeopleIcon />}
+              onClick={() => navigate('/drivers')}
+              fullWidth
+              sx={{ py: 2 }}
+            >
+              Manage Drivers
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="outlined"
+              startIcon={<RouteIcon />}
+              onClick={() => navigate('/route-optimization')}
+              fullWidth
+              sx={{ py: 2 }}
+            >
+              Optimize Routes
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              variant="outlined"
+              startIcon={<MapIcon />}
+              onClick={() => navigate('/live-tracking')}
+              fullWidth
+              sx={{ py: 2 }}
+            >
+              Live Tracking
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Business Overview - Single Card */}
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Box display="flex" alignItems="center" mb={3}>
+          <BusinessIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
+          <Typography variant="h5" component="h2" fontWeight="bold">
+            Business Information
           </Typography>
         </Box>
 
@@ -721,79 +891,25 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ stats, onRefresh 
           </Grid>
         </Grid>
 
-        {/* Account Management Section */}
-        <Box mt={4} pt={3} borderTop="1px solid" borderColor="divider">
-          <Typography variant="h6" gutterBottom color="primary" fontWeight="medium">
-            Account Management
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            Reset passwords for drivers and business owners
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {/* Business Owner Reset */}
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ bgcolor: 'primary.50', p: 3, borderRadius: 2, border: '1px solid', borderColor: 'primary.200' }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <BusinessIcon color="primary" sx={{ mr: 1, fontSize: 24 }} />
-                  <Typography variant="h6" color="primary.main" fontWeight="medium">
-                    Business Owner
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" mb={2}>
-                  Reset password for business owner account
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<SecurityIcon />}
-                  onClick={() => openResetAccountDialog('business-owner', 'Business Owner', 'BUSINESS')}
-                  fullWidth
-                >
-                  Reset Business Owner Password
-                </Button>
-              </Box>
-            </Grid>
-
-            {/* Drivers Reset */}
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ bgcolor: 'success.50', p: 3, borderRadius: 2, border: '1px solid', borderColor: 'success.200' }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <PeopleIcon color="success" sx={{ mr: 1, fontSize: 24 }} />
-                  <Typography variant="h6" color="success.main" fontWeight="medium">
-                    Drivers ({drivers.length})
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" mb={2}>
-                  Reset passwords for driver accounts
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => {
-                    // Show list of drivers for reset
-                    const driverList = drivers.map(d => `${d.firstName} ${d.lastName}`).join(', ');
-                    if (window.confirm(`Reset passwords for all drivers?\n\nDrivers: ${driverList}`)) {
-                      setSuccess(`Password reset initiated for ${drivers.length} drivers. New temporary passwords will be generated.`);
-                    }
-                  }}
-                  fullWidth
-                >
-                  Reset All Driver Passwords
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
       </Paper>
 
       {/* Driver Performance Analytics */}
-      <Paper sx={{ p: 4, mt: 4 }}>
-        <Box display="flex" alignItems="center" mb={3}>
-          <AnalyticsIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
-          <Typography variant="h5" component="h2" fontWeight="bold">
-            Driver Performance Analytics
-          </Typography>
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Box display="flex" alignItems="center">
+            <AnalyticsIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
+            <Typography variant="h5" component="h2" fontWeight="bold">
+              Driver Performance
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<PeopleIcon />}
+            onClick={() => navigate('/drivers')}
+            size="small"
+          >
+            View All Drivers
+          </Button>
         </Box>
 
         <Grid container spacing={4}>
@@ -980,12 +1096,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ stats, onRefresh 
       </Paper>
 
       {/* Financial Reporting & Analytics */}
-      <Paper sx={{ p: 4, mt: 4 }}>
-        <Box display="flex" alignItems="center" mb={3}>
-          <MoneyIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
-          <Typography variant="h5" component="h2" fontWeight="bold">
-            Financial Reporting & Analytics
-          </Typography>
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Box display="flex" alignItems="center">
+            <MoneyIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
+            <Typography variant="h5" component="h2" fontWeight="bold">
+              Financial Overview
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AnalyticsIcon />}
+            onClick={() => navigate('/analytics')}
+            size="small"
+          >
+            View Analytics
+          </Button>
         </Box>
 
         <Grid container spacing={4}>
@@ -1302,12 +1428,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ stats, onRefresh 
       </Paper>
 
       {/* Route Optimization & Tracking */}
-      <Paper sx={{ p: 4, mt: 4 }}>
-        <Box display="flex" alignItems="center" mb={3}>
-          <RouteIcon color="primary" sx={{ mr: 2, fontSize: 32 }} />
-          <Typography variant="h5" component="h2" fontWeight="bold">
-            Route Optimization & Tracking
-          </Typography>
+      <Paper sx={{ p: 4, mb: 4 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Box display="flex" alignItems="center">
+            <RouteIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
+            <Typography variant="h5" component="h2" fontWeight="bold">
+              Route Optimization
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<RouteIcon />}
+            onClick={() => navigate('/route-optimization')}
+            size="small"
+          >
+            Optimize Routes
+          </Button>
         </Box>
 
         <Grid container spacing={4}>
@@ -1548,42 +1684,48 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ stats, onRefresh 
           </TableContainer>
         </Box>
 
-        {/* Quick Actions */}
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom color="primary" fontWeight="medium">
-            Quick Actions
+      </Paper>
+
+      {/* Summary Section */}
+      <Paper sx={{ p: 4, mb: 4, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+        <Box display="flex" alignItems="center" mb={3}>
+          <TimelineIcon color="primary" sx={{ mr: 2, fontSize: 28 }} />
+          <Typography variant="h5" component="h2" fontWeight="bold">
+            Today's Summary
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              startIcon={<RouteIcon />}
-              onClick={() => navigate('/route-optimization')}
-            >
-              Optimize All Routes
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<MapIcon />}
-              onClick={() => navigate('/live-tracking')}
-            >
-              Live Tracking Map
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<TrafficIcon />}
-              onClick={() => navigate('/traffic-alerts')}
-            >
-              Traffic Alerts
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ScheduleIcon />}
-              onClick={() => navigate('/route-scheduling')}
-            >
-              Schedule Routes
-            </Button>
-          </Box>
         </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="h4" color="primary" fontWeight="bold">
+                {drivers.filter(d => d.isAvailable).length}
+              </Typography>
+              <Typography variant="h6" color="text.secondary">
+                Active Drivers
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="h4" color="success.main" fontWeight="bold">
+                {deliveryRoutes.filter(r => r.status === 'IN_PROGRESS').length}
+              </Typography>
+              <Typography variant="h6" color="text.secondary">
+                Active Routes
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="h4" color="warning.main" fontWeight="bold">
+                ${financialData.dailyRevenue.toLocaleString()}
+              </Typography>
+              <Typography variant="h6" color="text.secondary">
+                Today's Revenue
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
 
       {/* Error and Success Messages */}

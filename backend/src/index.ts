@@ -12,6 +12,7 @@ import path from 'path';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { initializeSocketIO } from './services/socketService';
+import PortManager from './utils/portManager';
 
 // Load environment variables
 dotenv.config();
@@ -176,8 +177,8 @@ import analyticsRoutes from './routes/analytics';
 import photoRoutes from './routes/photos';
 import signatureRoutes from './routes/signatures';
 import driverRoutes from './routes/driver';
-import paymentRoutes from './routes/payments';
 import routeOptimizationRoutes from './routes/routeOptimization';
+import paymentRoutes from './routes/payments';
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -190,8 +191,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/signatures', signatureRoutes);
 app.use('/api/driver', driverRoutes);
-app.use('/api/payments', paymentRoutes);
 app.use('/api/route-optimization', routeOptimizationRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
@@ -238,34 +239,69 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  const portManager = PortManager.getInstance();
+  portManager.cleanup();
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
+  const portManager = PortManager.getInstance();
+  portManager.cleanup();
   await prisma.$disconnect();
   process.exit(0);
 });
 
-// Start server
-server.listen(config.PORT, async () => {
+// Start server with port management
+const startServer = async () => {
   try {
+    const portManager = PortManager.getInstance();
+    
+    // Try to kill any existing process on the preferred port
+    await portManager.killProcessOnPort(Number(config.PORT));
+    
+    // Find an available port
+    const availablePort = await portManager.findAvailablePort({
+      preferredPort: Number(config.PORT),
+      maxAttempts: 5,
+      portRange: { start: 5000, end: 5010 }
+    });
+
     // Test database connection
     await prisma.$connect();
     console.log('✅ Database connected successfully');
     
-    console.log(`🚀 Delivery App Backend Server running on port ${config.PORT}`);
-    console.log(`📱 Environment: ${config.NODE_ENV}`);
-    console.log(`🔗 Health check: http://localhost:${config.PORT}/health`);
-    console.log(`🧪 Test endpoint: http://localhost:${config.PORT}/api/test`);
-    console.log(`🔐 Auth endpoints: http://localhost:${config.PORT}/api/auth`);
-    console.log(`📦 Order endpoints: http://localhost:${config.PORT}/api/orders`);
-    console.log(`🚚 Delivery endpoints: http://localhost:${config.PORT}/api/deliveries`);
+    // Start server on available port
+    server.listen(availablePort, () => {
+      console.log(`🚀 Delivery App Backend Server running on port ${availablePort}`);
+      console.log(`📱 Environment: ${config.NODE_ENV}`);
+      console.log(`🔗 Health check: http://localhost:${availablePort}/health`);
+      console.log(`🧪 Test endpoint: http://localhost:${availablePort}/api/test`);
+      console.log(`🔐 Auth endpoints: http://localhost:${availablePort}/api/auth`);
+      console.log(`📦 Order endpoints: http://localhost:${availablePort}/api/orders`);
+      console.log(`🚚 Delivery endpoints: http://localhost:${availablePort}/api/deliveries`);
+    });
+
+    // Handle server errors
+    server.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${availablePort} is in use, trying to find another...`);
+        portManager.releasePort(availablePort);
+        startServer(); // Retry with a new port
+      } else {
+        console.error('❌ Server error:', error);
+        process.exit(1);
+      }
+    });
+
   } catch (error) {
-    console.error('❌ Failed to connect to database:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
-});
+};
+
+// Start the server
+startServer();
 
 export default app;

@@ -81,7 +81,7 @@ import {
   CloudUpload as CloudUploadIcon,
   CloudDownload as CloudDownloadIcon,
   Monitor as MonitorIcon,
-  Database as DatabaseIcon,
+  Storage as DatabaseIcon,
   Security as SecurityIcon2,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
@@ -308,7 +308,7 @@ const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ stats, 
         });
         onRefresh(); // Refresh the dashboard data
       } else {
-        setError(data.error?.message || 'Failed to create user');
+        setError(data.message || 'Failed to create user');
       }
     } catch (err: any) {
       setError('Failed to create user. Please try again.');

@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, AppBar, Toolbar, Typography, Button, IconButton, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { Menu as MenuIcon, AccountCircle, LightMode, DarkMode, Refresh as RefreshIcon } from '@mui/icons-material';
 import { useAuthStore } from '@/store/authStore';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme as useCustomTheme } from '@/contexts/ThemeContext';
 import Sidebar from './Sidebar';
 import RealTimeNotificationCenter from '../Notifications/RealTimeNotificationCenter';
+import MobileLayout from '../Mobile/MobileLayout';
+import useResponsive from '@/hooks/useResponsive';
 
 
 const Layout: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { mode, toggleColorMode } = useTheme();
+  const { mode, toggleColorMode } = useCustomTheme();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isMobile } = useResponsive();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
 
 
@@ -24,6 +29,16 @@ const Layout: React.FC = () => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
+  // Use mobile layout for mobile devices
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        <Outlet />
+        <RealTimeNotificationCenter />
+      </MobileLayout>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>

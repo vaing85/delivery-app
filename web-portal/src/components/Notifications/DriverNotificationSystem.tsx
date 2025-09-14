@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogActions,
   Switch,
+  TextField,
   FormControlLabel,
   Badge,
   Alert,
@@ -171,7 +172,7 @@ const DriverNotificationSystem: React.FC<DriverNotificationSystemProps> = ({ dri
       case 'order_update': return <InfoIcon color="info" />;
       case 'payment': return <TrendingUpIcon color="success" />;
       case 'rating': return <StarIcon color="warning" />;
-      case 'system': return <SettingsIcon color="default" />;
+      case 'system': return <SettingsIcon color="inherit" />;
       case 'emergency': return <WarningIcon color="error" />;
       default: return <NotificationIcon />;
     }
@@ -545,14 +546,14 @@ const DriverNotificationSystem: React.FC<DriverNotificationSystemProps> = ({ dri
                   label="Start Time"
                   type="time"
                   value={settings.quietHours.start}
-                  onChange={(e) => handleQuietHoursChange('start', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleQuietHoursChange('start', e.target.value)}
                   size="small"
                 />
                 <TextField
                   label="End Time"
                   type="time"
                   value={settings.quietHours.end}
-                  onChange={(e) => handleQuietHoursChange('end', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleQuietHoursChange('end', e.target.value)}
                   size="small"
                 />
               </Box>

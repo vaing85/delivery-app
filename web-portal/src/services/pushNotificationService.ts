@@ -20,13 +20,13 @@ export interface PushNotificationData {
 }
 
 export interface NotificationPermission {
-  permission: NotificationPermissionState;
+  permission: 'default' | 'granted' | 'denied';
   granted: boolean;
 }
 
 class PushNotificationService {
   private isSupported: boolean;
-  private permission: NotificationPermissionState = 'default';
+  private permission: 'default' | 'granted' | 'denied' = 'default';
   private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
@@ -143,12 +143,10 @@ class PushNotificationService {
         body: data.body,
         icon: data.icon || '/icon-192x192.png',
         badge: data.badge || '/badge-72x72.png',
-        image: data.image,
         tag: data.tag,
         data: data.data,
         requireInteraction: data.requireInteraction || false,
-        silent: data.silent || false,
-        timestamp: data.timestamp || Date.now()
+        silent: data.silent || false
       });
 
       // Handle notification click
@@ -189,13 +187,10 @@ class PushNotificationService {
         body: data.body,
         icon: data.icon || '/icon-192x192.png',
         badge: data.badge || '/badge-72x72.png',
-        image: data.image,
         tag: data.tag,
         data: data.data,
-        actions: data.actions,
         requireInteraction: data.requireInteraction || false,
-        silent: data.silent || false,
-        timestamp: data.timestamp || Date.now()
+        silent: data.silent || false
       });
     } catch (error) {
       console.error('Error sending notification via service worker:', error);
@@ -204,7 +199,7 @@ class PushNotificationService {
   }
 
   // Handle incoming push messages
-  handlePushMessage(event: PushEvent): void {
+  handlePushMessage(event: any): void {
     try {
       const data = event.data?.json();
       
@@ -309,7 +304,7 @@ class PushNotificationService {
   }
 
   // Utility function to convert VAPID key
-  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+  private urlBase64ToUint8Array(base64String: string): ArrayBuffer {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
       .replace(/-/g, '+')
@@ -321,7 +316,7 @@ class PushNotificationService {
     for (let i = 0; i < rawData.length; ++i) {
       outputArray[i] = rawData.charCodeAt(i);
     }
-    return outputArray;
+    return outputArray.buffer;
   }
 
   // Test notification

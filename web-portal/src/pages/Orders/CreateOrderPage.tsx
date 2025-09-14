@@ -124,7 +124,7 @@ const CreateOrderPage: React.FC = () => {
     },
     onSuccess: (data) => {
       toast.success('Order created successfully!');
-      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       navigate(`/orders/${data.data.id}`);
     },
     onError: (error: any) => {
@@ -566,9 +566,9 @@ const CreateOrderPage: React.FC = () => {
                 variant="contained"
                 type="submit"
                 startIcon={<SaveIcon />}
-                disabled={!isValid || items.length === 0 || createOrderMutation.isLoading}
+                disabled={!isValid || items.length === 0 || createOrderMutation.isPending}
               >
-                {createOrderMutation.isLoading ? <CircularProgress size={20} /> : 'Create Order'}
+                {createOrderMutation.isPending ? <CircularProgress size={20} /> : 'Create Order'}
               </Button>
             ) : (
               <Button
@@ -756,7 +756,7 @@ const CreateOrderPage: React.FC = () => {
           setShowItemDialog(false);
           setEditingItem(null);
         }}
-        onSave={editingItem ? updateItem : addItem}
+        onSave={editingItem ? (item) => updateItem({ ...item, id: editingItem.id }) : addItem}
         item={editingItem}
       />
     </Box>

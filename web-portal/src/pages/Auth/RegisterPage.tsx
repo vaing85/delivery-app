@@ -12,7 +12,8 @@ import {
   Alert,
   CircularProgress,
   InputAdornment,
-  IconButton
+  IconButton,
+  SelectChangeEvent
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -51,6 +52,13 @@ const RegisterPage: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [field]: event.target.value
+    }));
+  };
+
+  const handleRoleChange = (event: SelectChangeEvent<"DRIVER" | "CUSTOMER">) => {
+    setFormData(prev => ({
+      ...prev,
+      role: event.target.value as "DRIVER" | "CUSTOMER"
     }));
   };
 
@@ -243,7 +251,7 @@ const RegisterPage: React.FC = () => {
             <Select
               value={formData.role}
               label="Role"
-              onChange={handleInputChange('role')}
+              onChange={handleRoleChange}
             >
               <MenuItem value="CUSTOMER">Customer</MenuItem>
               <MenuItem value="DRIVER">Driver</MenuItem>

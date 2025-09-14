@@ -45,7 +45,7 @@ import {
   Error,
 } from '@mui/icons-material';
 import { useAuthStore } from '../../store/authStore';
-import { api } from '../../services/api';
+import api from '../../services/api';
 
 interface Location {
   id: string;

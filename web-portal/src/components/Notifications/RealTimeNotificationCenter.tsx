@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -148,25 +148,6 @@ const RealTimeNotificationCenter: React.FC = () => {
   const { setEventHandlers, isConnected } = useWebSocket();
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Load initial data
-  useEffect(() => {
-    loadNotifications();
-    loadTemplates();
-    loadOnlineUsers();
-    loadSettings();
-  }, []);
-
-  // Set up WebSocket event handlers
-  useEffect(() => {
-    if (isConnected) {
-      setEventHandlers({
-        onNotification: (data: RealTimeNotification) => {
-          handleNewNotification(data);
-        }
-      });
-    }
-  }, [isConnected, setEventHandlers]);
-
   const loadNotifications = async () => {
     try {
       const response = await notificationsAPI.getNotifications({ limit: 50 });
@@ -180,6 +161,11 @@ const RealTimeNotificationCenter: React.FC = () => {
   };
 
   const loadTemplates = async () => {
+    // Only load templates if user is admin
+    if (user?.role !== 'ADMIN') {
+      return;
+    }
+
     try {
       const response = await fetch('/api/real-time-notifications/templates', {
         headers: {
@@ -196,6 +182,11 @@ const RealTimeNotificationCenter: React.FC = () => {
   };
 
   const loadOnlineUsers = async () => {
+    // Only load online users if user is admin
+    if (user?.role !== 'ADMIN') {
+      return;
+    }
+
     try {
       const response = await fetch('/api/real-time-notifications/online-users', {
         headers: {
@@ -223,7 +214,7 @@ const RealTimeNotificationCenter: React.FC = () => {
     setSnackbar({ open: true, message: 'Settings saved successfully', severity: 'success' });
   };
 
-  const handleNewNotification = (notification: RealTimeNotification) => {
+  const handleNewNotification = useCallback((notification: RealTimeNotification) => {
     setNotifications(prev => [notification, ...prev]);
     setUnreadCount(prev => prev + 1);
 
@@ -247,7 +238,28 @@ const RealTimeNotificationCenter: React.FC = () => {
       position: 'top-right',
       autoClose: 5000
     });
-  };
+  }, [settings.soundEnabled, settings.desktopNotifications]);
+
+  // Load initial data
+  useEffect(() => {
+    if (user) {
+      loadNotifications();
+      loadTemplates();
+      loadOnlineUsers();
+      loadSettings();
+    }
+  }, [user]);
+
+  // Set up WebSocket event handlers
+  useEffect(() => {
+    if (isConnected) {
+      setEventHandlers({
+        onNotification: (data: RealTimeNotification) => {
+          handleNewNotification(data);
+        }
+      });
+    }
+  }, [isConnected, setEventHandlers, handleNewNotification]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -394,8 +406,8 @@ const RealTimeNotificationCenter: React.FC = () => {
     }
   };
 
-  // Debug logging
-  console.log('RealTimeNotificationCenter rendered', { user, unreadCount });
+  // Debug logging (commented out to reduce console noise)
+  // console.log('RealTimeNotificationCenter rendered', { user, unreadCount });
 
   return (
     <Box>
@@ -427,12 +439,14 @@ const RealTimeNotificationCenter: React.FC = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">Real-time Notification Center</Typography>
             <Box display="flex" alignItems="center" gap={1}>
-              <Chip
-                icon={<OnlineIcon />}
-                label={`${onlineUsers.total} Online`}
-                color={isConnected ? 'success' : 'error'}
-                size="small"
-              />
+              {user?.role === 'ADMIN' && (
+                <Chip
+                  icon={<OnlineIcon />}
+                  label={`${onlineUsers.total} Online`}
+                  color={isConnected ? 'success' : 'error'}
+                  size="small"
+                />
+              )}
               <IconButton onClick={() => setIsOpen(false)}>
                 <CloseIcon />
               </IconButton>
@@ -443,9 +457,9 @@ const RealTimeNotificationCenter: React.FC = () => {
         <DialogContent>
           <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
             <Tab label="Notifications" />
-            <Tab label="Send Notification" />
-            <Tab label="Templates" />
-            <Tab label="Schedule" />
+            {user?.role === 'ADMIN' && <Tab label="Send Notification" />}
+            {user?.role === 'ADMIN' && <Tab label="Templates" />}
+            {user?.role === 'ADMIN' && <Tab label="Schedule" />}
             <Tab label="Settings" />
           </Tabs>
 
@@ -500,7 +514,8 @@ const RealTimeNotificationCenter: React.FC = () => {
                         <Button
                           size="small"
                           variant="contained"
-                          href={notification.actionUrl}
+                          component="a"
+                          href={notification.actionUrl || '#'}
                           target="_blank"
                         >
                           {notification.actionText || 'Take Action'}
@@ -525,8 +540,8 @@ const RealTimeNotificationCenter: React.FC = () => {
             </Box>
           )}
 
-          {/* Send Notification Tab */}
-          {activeTab === 1 && (
+          {/* Send Notification Tab - Admin Only */}
+          {user?.role === 'ADMIN' && activeTab === 1 && (
             <Box mt={2}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
@@ -642,8 +657,8 @@ const RealTimeNotificationCenter: React.FC = () => {
             </Box>
           )}
 
-          {/* Templates Tab */}
-          {activeTab === 2 && (
+          {/* Templates Tab - Admin Only */}
+          {user?.role === 'ADMIN' && activeTab === 2 && (
             <Box mt={2}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h6">Notification Templates</Typography>
@@ -680,8 +695,8 @@ const RealTimeNotificationCenter: React.FC = () => {
             </Box>
           )}
 
-          {/* Schedule Tab */}
-          {activeTab === 3 && (
+          {/* Schedule Tab - Admin Only */}
+          {user?.role === 'ADMIN' && activeTab === 3 && (
             <Box mt={2}>
               <Typography variant="h6" mb={2}>Scheduled Notifications</Typography>
               <Alert severity="info">
@@ -691,7 +706,7 @@ const RealTimeNotificationCenter: React.FC = () => {
           )}
 
           {/* Settings Tab */}
-          {activeTab === 4 && (
+          {((user?.role === 'ADMIN' && activeTab === 4) || (user?.role !== 'ADMIN' && activeTab === 1)) && (
             <Box mt={2}>
               <Typography variant="h6" mb={2}>Notification Settings</Typography>
               
@@ -732,59 +747,61 @@ const RealTimeNotificationCenter: React.FC = () => {
                 </AccordionDetails>
               </Accordion>
 
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Online Users</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card>
-                        <CardContent>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <PersonIcon />
-                            <Typography variant="h6">{onlineUsers.byRole.admin}</Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary">Admins</Typography>
-                        </CardContent>
-                      </Card>
+              {user?.role === 'ADMIN' && (
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Online Users</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Card>
+                          <CardContent>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <PersonIcon />
+                              <Typography variant="h6">{onlineUsers.byRole.admin}</Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">Admins</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Card>
+                          <CardContent>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <DriverIcon />
+                              <Typography variant="h6">{onlineUsers.byRole.driver}</Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">Drivers</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Card>
+                          <CardContent>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <PersonIcon />
+                              <Typography variant="h6">{onlineUsers.byRole.customer}</Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">Customers</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Card>
+                          <CardContent>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <BusinessIcon />
+                              <Typography variant="h6">{onlineUsers.byRole.business}</Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">Businesses</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card>
-                        <CardContent>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <DriverIcon />
-                            <Typography variant="h6">{onlineUsers.byRole.driver}</Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary">Drivers</Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card>
-                        <CardContent>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <PersonIcon />
-                            <Typography variant="h6">{onlineUsers.byRole.customer}</Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary">Customers</Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card>
-                        <CardContent>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <BusinessIcon />
-                            <Typography variant="h6">{onlineUsers.byRole.business}</Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary">Businesses</Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
+                  </AccordionDetails>
+                </Accordion>
+              )}
 
               <Box mt={2}>
                 <Button variant="contained" onClick={saveSettings}>

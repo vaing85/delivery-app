@@ -1,1 +1,2 @@
-export { default as PaymentComponent } from './PaymentComponent';
+export { default as RapydPaymentComponent } from './RapydPaymentComponent';
+

@@ -152,7 +152,10 @@ const RouteOptimizationMap: React.FC<RouteOptimizationMapProps> = ({
           latitude: d.position.lat,
           longitude: d.position.lng
         })),
-        currentLocation
+        currentLocation: {
+          latitude: currentLocation.lat,
+          longitude: currentLocation.lng
+        }
       };
 
       const response = await driverAPI.optimizeRoute(routeData);

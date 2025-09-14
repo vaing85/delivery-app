@@ -23,13 +23,13 @@ import {
   Notifications as NotificationIcon,
   NotificationsOff as NotificationOffIcon,
   Settings as SettingsIcon,
-  TestTube as TestIcon,
+  Science as TestIcon,
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   Info as InfoIcon
 } from '@mui/icons-material';
 import { usePushNotifications } from '../../services/pushNotificationService';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface PushNotificationSettingsProps {
   onClose?: () => void;
@@ -172,7 +172,7 @@ const PushNotificationSettings: React.FC<PushNotificationSettingsProps> = ({ onC
   };
 
   const getPermissionStatus = () => {
-    switch (permission.permission) {
+    switch (permission.permission as string) {
       case 'granted':
         return { color: 'success', icon: <CheckIcon />, text: 'Granted' };
       case 'denied':
@@ -217,7 +217,7 @@ const PushNotificationSettings: React.FC<PushNotificationSettingsProps> = ({ onC
                 color={permissionStatus.color as any}
                 variant="outlined"
               />
-              {permission.permission !== 'granted' && (
+              {(permission.permission as string) !== 'granted' && (
                 <Button
                   variant="contained"
                   size="small"

@@ -277,7 +277,7 @@ const DriverDetailsPage: React.FC = () => {
         const foundDriver = mockDrivers.find(d => d.id === driverId);
         if (foundDriver) {
           setDriver(foundDriver);
-          setRecentDeliveries(getMockDeliveries(driverId));
+          setRecentDeliveries(getMockDeliveries(driverId || ''));
         } else {
           setError('Driver not found');
         }

@@ -251,7 +251,7 @@ const GoogleTrackingMap: React.FC<GoogleTrackingMapProps> = ({ orderId }) => {
 
     // Create route polyline
     if (data.route && data.route.length > 1) {
-      const path = data.route.map(point => ({ lat: point.lat, lng: point.lng }));
+      const path = data.route.map((point: any) => ({ lat: point.lat, lng: point.lng }));
       const routePolyline = new google.maps.Polyline({
         path,
         geodesic: true,

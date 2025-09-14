@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 // Create axios instance with default config
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:5000'),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           // Use the full URL for refresh
-          const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:5000');
           const response = await axios.post(`${baseURL}/api/auth/refresh`, {
             refreshToken
           });
@@ -485,6 +485,15 @@ export const photosAPI = {
   getOrderPhotosByType: async (orderId: string, photoType: string) => {
     const response = await api.get<ApiResponse>(`/api/photos/order/${orderId}/type/${photoType}`);
     return response.data;
+  },
+
+  uploadPhoto: async (photoData: FormData) => {
+    const response = await api.post<ApiResponse>('/api/driver/photo/upload', photoData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 };
 
@@ -729,75 +738,84 @@ export const driverAPI = {
   }
 };
 
-
-
-// Payments API
+// Rapyd Payments API
 export const paymentsAPI = {
-  // Create payment intent
-  createPaymentIntent: async (data: { orderId: string }) => {
-    const response = await api.post<ApiResponse>('/api/payments/create-intent', data);
-    return response.data;
-  },
-
-  processPayment: async (paymentData: {
-    orderId: string;
-    amount: number;
-    paymentMethodId: string;
+  // Create a Rapyd customer
+  createCustomer: async (customerData: {
+    email: string;
+    name: string;
+    phone_number?: string;
+    address?: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      country: string;
+      zip: string;
+    };
   }) => {
-    const response = await api.post<ApiResponse>('/api/payments/process', paymentData);
+    const response = await api.post<ApiResponse>('/api/payments/customers', customerData);
     return response.data;
   },
 
-  confirmPayment: async (paymentIntentId: string) => {
-    const response = await api.post<ApiResponse>('/api/payments/confirm', {
-      paymentIntentId
+  // Get customer by ID
+  getCustomer: async (customerId: string) => {
+    const response = await api.get<ApiResponse>(`/api/payments/customers/${customerId}`);
+    return response.data;
+  },
+
+  // Get available payment methods
+  getPaymentMethods: async (country: string = 'US', currency: string = 'USD') => {
+    const response = await api.get<ApiResponse>('/api/payments/methods', {
+      params: { country, currency }
     });
     return response.data;
   },
 
-  createPaymentMethod: async (paymentMethodData: {
-    card: {
-      number: string;
-      exp_month: number;
-      exp_year: number;
-      cvc: string;
-      name: string;
-    };
-  }) => {
-    const response = await api.post<ApiResponse>('/api/payments/payment-method', paymentMethodData);
-    return response.data;
-  },
-
-  getPaymentMethods: async () => {
-    const response = await api.get<ApiResponse>('/api/payments/payment-methods');
-    return response.data;
-  },
-
-  getDriverEarnings: async (period: string = '30d') => {
-    const response = await api.get<ApiResponse>(`/api/payments/driver/earnings?period=${period}`);
-    return response.data;
-  },
-
-  getDriverPayouts: async (period: string = '30d') => {
-    const response = await api.get<ApiResponse>(`/api/payments/driver/payouts?period=${period}`);
-    return response.data;
-  },
-
-  processDriverPayout: async (payoutData: {
-    driverId: string;
+  // Create a checkout page
+  createCheckoutPage: async (checkoutData: {
+    orderId: string;
     amount: number;
-    period: string;
-    deliveryIds: string[];
+    currency: string;
+    redirect_url: string;
+    complete_payment_url: string;
+    cancel_payment_url: string;
+    description?: string;
   }) => {
-    const response = await api.post<ApiResponse>('/api/payments/driver/payout', payoutData);
+    const response = await api.post<ApiResponse>('/api/payments/checkout', checkoutData);
     return response.data;
   },
 
-  refundPayment: async (refundData: {
-    paymentIntentId: string;
-    amount?: number;
+  // Get checkout page by ID
+  getCheckoutPage: async (checkoutId: string) => {
+    const response = await api.get<ApiResponse>(`/api/payments/checkout/${checkoutId}`);
+    return response.data;
+  },
+
+  // Get payment by ID
+  getPayment: async (paymentId: string) => {
+    const response = await api.get<ApiResponse>(`/api/payments/${paymentId}`);
+    return response.data;
+  },
+
+  // Create a refund
+  createRefund: async (refundData: {
+    paymentId: string;
+    amount: number;
+    reason?: string;
   }) => {
     const response = await api.post<ApiResponse>('/api/payments/refund', refundData);
+    return response.data;
+  },
+
+  // Complete payment and update order status
+  completePayment: async (paymentData: {
+    orderId: string;
+    paymentId: string;
+    status: 'completed' | 'pending' | 'failed';
+    amount: number;
+  }) => {
+    const response = await api.post<ApiResponse>('/api/payments/complete', paymentData);
     return response.data;
   }
 };

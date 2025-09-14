@@ -285,7 +285,7 @@ class GoogleMapsManager {
     const scripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
     console.log('🔍 GoogleMapsManager: Found existing scripts:', scripts.length);
     scripts.forEach((script, index) => {
-      console.log(`🔍 Script ${index}:`, script.src);
+      console.log(`🔍 Script ${index}:`, (script as HTMLScriptElement).src);
     });
     
     const callbacks = Object.keys(window).filter(key => /^googleMapsCallback_/.test(key));

@@ -23,7 +23,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import GoogleTrackingMap from '@/components/Tracking/GoogleTrackingMap-simple';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import GoogleMapsDebugger from '@/components/Debug/GoogleMapsDebugger';
 import { useAuthStore } from '@/store/authStore';
 import { CircularProgress } from '@mui/material';
 
@@ -378,8 +377,6 @@ const OrderDetailsPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Debug Component - Remove this after fixing the issue */}
-      <GoogleMapsDebugger />
     </Box>
   );
 };
